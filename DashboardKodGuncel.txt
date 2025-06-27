@@ -1,0 +1,114 @@
+js
+document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+    displayWorkoutDays();
+    const activeSectionId = localStorage.getItem('activeSection') || 'dashboard';
+    showSection(activeSectionId);
+    initDashboardChart();
+    initProgressChart();
+    updateDashboard();
+    updateNutritionReport();
+    updateProgressList();
+    updateHistoryList();
+    updateWaterHistoryList();
+    updateStepHistoryList();
+    checkAutoResetTimer();
+    checkDailyDashboardReset();
+
+    document.getElementById('foodCategory').addEventListener('change', updateFoodNameDatalist);
+    document.getElementById('foodName').addEventListener('input', () => {
+        const selectedFoodName = document.getElementById('foodName').value;
+        const category = document.getElementById('foodCategory').value;
+        const gramInput = document.getElementById('foodGram');
+        if (foodDatabase[category]) {
+            const foodItem = foodDatabase[category].find(food => food.name === selectedFoodName);
+            gramInput.value = foodItem?.defaultGram || '100';
+} else {
+            gramInput.value = '100';
+}
+});
+
+    updateFoodNameDatalist();
+});
+
+function checkDailyDashboardReset() {
+    const today = getCurrentDate();
+    const lastReset = localStorage.getItem('dashboardResetDate');
+    if (lastReset === today) return;
+
+    document.getElementById('caloriesBurnedValue').textContent = '0';
+    document.getElementById('caloriesEatenValue').textContent = '0';
+    document.getElementById('stepsTakenValue').textContent = '0';
+    document.getElementById('waterDrankValue').textContent = '0.0';
+
+    if (dashboardChart) {
+        dashboardChart.data.labels = [];
+        dashboardChart.data.datasets.forEach(ds => ds.data = []);
+        dashboardChart.update();
+}
+
+    localStorage.setItem('dashboardResetDate', today);
+}
+
+setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 0 && now.getMinutes() < 5) {
+        checkDailyDashboardReset();
+}
+}, 5 * 60 * 1000);
+
+function getCurrentDate() {
+    const now = new Date();
+    return now.toISOString().split('T')[0];
+}
+
+function showSection(sectionId) {
+    const sections = document.querySelectorAll('main section');
+    sections.forEach(section => {
+        section.style.display = (section.id === sectionId)? 'block': 'none';
+});
+    localStorage.setItem('activeSection', sectionId);
+}
+
+function initDashboardChart() {
+    const ctx = document.getElementById('dashboardChart').getContext('2d');
+    dashboardChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Kalori Alımı',
+                data: [],
+                borderColor: '#4bc0c0',
+                fill: false
+}]
+},
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true}
+}
+}
+});
+}
+
+function initProgressChart() {
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    progressChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Kilo (kg)',
+                data: [],
+                backgroundColor: '#36a2eb'
+}]
+},
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true}
+}
+}
+});
+}
